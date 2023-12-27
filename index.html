@@ -1,13 +1,191 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>좀비 머쉬맘 타이머</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column; /* 세로 방향으로 정렬 */
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        #root {
+            text-align: center;
+        }
+
+        #main{
+            display: flex;
+        }
+
+        .button-container {
+            position: relative;
+            width: 110px;
+            height: 75px;
+            margin: 5px;
+            font-size: 16px;
+            display: inline-block;
+        }
+
+        button {
+            width: 100%;
+            height: 100%;
+            padding: 0;
+            background-image: url('/img/좀비머쉬맘.webp');  /* 이미지 경로로 변경 */
+            background-repeat: no-repeat;
+            background-size: cover;
+            border: none;
+            cursor: pointer;
+            color: white;
+        }
+
+        .transparent-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2;
+        }
+
+        .timer-container {
+            color: white;
+            font-size: 24px;
+        }
+
+        #alert-container {
+            width: 300px;
+            height: 500px;
+            overflow-y:scroll;
+            border: 1px solid #ccc;
+            margin: 10px;
+            margin-top: 200px;
+        }
+
+        footer {
+            width: 100%;
+            height: 300px;
+            background-color: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        textarea {
+            width: 100%;
+            height: 100%;
+            resize: none;
+            border: none;
+            padding: 10px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+    </style>
 </head>
 <body>
-    <div>
-        좀비머쉬맘 죽이고 싶다.
+    <div id="main">
+        <div id="root"></div>
+        <div>
+            <textarea id="alert-container" readonly></textarea>
+        </div>
     </div>
+    <audio id="alarm" src="/sound/beep.mp3" preload="auto"></audio>
+    <script>
+        const timers = Array.from({ length: 8 }, () => Array(5).fill(null));
+        const outputTextArea = document.getElementById('output');
+
+        function showAlert(message) {
+            const alertContainer = document.getElementById('alert-container');
+            alertContainer.innerHTML = message + "\n" + alertContainer.innerHTML;
+            alertContainer.style.display = 'block';
+        }
+
+        function handleClick(row, col) {
+            if (timers[row][col] === null) {
+                const buttonContainer = document.getElementById(`button-${row}-${col}`);
+                const overlay = document.createElement('div');
+                overlay.classList.add('transparent-overlay');
+
+                const timerContainer = document.createElement('div');
+                timerContainer.classList.add('timer-container');
+
+                let minutes = 25;  // 테스트를 위해 0으로 설정.
+                let seconds = 0;  // 테스트를 위해 5로 설정
+
+                function updateTimer() {
+                    timerContainer.innerText = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+                    if (minutes === 0 && seconds === 0) {
+                        // 타이머 종료 후, overlay 및 interval 제거
+                        if (overlay.parentNode) {
+                            overlay.parentNode.removeChild(overlay);
+                        }
+                        clearInterval(timers[row][col]);
+                        timers[row][col] = null;
+
+                        // 타이머 종료 시 알람음 재생
+                        const alarmSound = document.getElementById('alarm');
+                        alarmSound.play();
+
+                        // 사용자에게 메시지 표시
+                        showAlert(`${buttonContainer.innerText} 채널 좀비 머쉬맘 등장`);
+                    } else {
+                        if (seconds === 0) {
+                            minutes--;
+                            seconds = 59;
+                        } else {
+                            seconds--;
+                        }
+                    }
+                }
+
+                timers[row][col] = setInterval(updateTimer, 1000);
+
+                overlay.appendChild(timerContainer);
+                buttonContainer.appendChild(overlay);
+
+                updateTimer();
+            }
+        }
+
+        function renderButtonGrid() {
+            const rootElement = document.getElementById('root');
+            rootElement.innerHTML = '<h1>좀비머쉬맘 타이머</h1><br>';
+
+            for (let row = 0; row < 8; row++) {
+                for (let col = 0; col < 5; col++) {
+                    const buttonContainer = document.createElement('div');
+                    buttonContainer.classList.add('button-container');
+                    const buttonElement = document.createElement('button');
+                    buttonElement.id = `button-${row}-${col}`;
+                    buttonElement.addEventListener('click', () => handleClick(row, col));
+
+                    // 숫자 및 20세 이상 문구 추가
+                    const buttonText = row * 5 + col + 1 === 2 ? '20세 이상' : row * 5 + col + 1;
+                    buttonElement.innerText = buttonText;
+
+                    buttonContainer.appendChild(buttonElement);
+                    rootElement.appendChild(buttonContainer);
+                }
+                const lineBreak = document.createElement('br');
+                rootElement.appendChild(lineBreak);
+            }
+        }
+
+        renderButtonGrid();
+    </script>
+
+    
+
+    <footer>문의: <a href="https://velog.io/@skwogus98/좀비머쉬맘-타이머-제작"> https://velog.io/@skwogus98/좀비머쉬맘-타이머-제작</a></footer>
 </body>
 </html>
